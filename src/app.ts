@@ -3,11 +3,18 @@ import qs from 'querystring'
 import util from 'util'
 import stream from 'stream'
 
-import express, { Application, RequestHandler, Response as ExpressResponse } from 'express'
+import express, {
+  Application,
+  RequestHandler,
+  Response as ExpressResponse,
+  ErrorRequestHandler
+} from 'express'
 import compression from 'compression'
 import { config } from 'dotenv'
 import fetch, { Response as FetchResponse } from 'node-fetch'
 import LinkHeader from 'http-link-header'
+import morgan from 'morgan'
+import { NextFunction } from 'connect'
 
 const pipeline = util.promisify(stream.pipeline)
 
@@ -58,6 +65,15 @@ async function pipeResponse(from: FetchResponse, to: ExpressResponse, host: stri
   return pipeline(from.body, to)
 }
 
+const notFoundHandler: RequestHandler = (req, res) => {
+  res.status(404).end()
+}
+
+const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+  res.status(500).end()
+}
+
+app.use(morgan('short'))
 app.use(compression())
 
 app.get(
@@ -115,6 +131,9 @@ app.get(
     }
   })
 )
+
+app.all('/', notFoundHandler)
+app.use(errorHandler)
 
 app.listen(port, function() {
   console.log(`Example app listening on port ${port}!`)
