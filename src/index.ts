@@ -1,6 +1,6 @@
 import { config as envConfig } from 'dotenv'
 
-import { GhProxy, GhProxyConfig } from './app'
+import { GhProxy, GhProxyConfig } from './gh-proxy'
 
 envConfig()
 
