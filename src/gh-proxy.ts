@@ -14,6 +14,7 @@ import fetch, { Response as FetchResponse } from 'node-fetch'
 import LinkHeader from 'http-link-header'
 import morgan from 'morgan'
 import pick from 'object.pick'
+import cors from 'cors'
 
 const pipeline = util.promisify(stream.pipeline)
 
@@ -45,6 +46,7 @@ export class GhProxy {
 
     this._app.use(morgan('short'))
     this._app.use(compression())
+    this._app.use(cors())
 
     for (const item of config.endpoints) {
       this._app.get(item.path, (req, res, next) => {
