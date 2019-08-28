@@ -1,13 +1,32 @@
+import assert from 'assert'
 import request from 'supertest'
+import { config as envConfig } from 'dotenv'
 
-describe('It works', () => {
-  //const zz = request()
+import { GhProxy, GhProxyConfig } from './gh-proxy'
 
-  it('Content-Type: json', () => {})
+envConfig()
 
-  it('Links properly set', () => {})
+const proxyConfig: GhProxyConfig = {
+  endpoints: [
+    {
+      path: '/users/:username/repos',
+      queryKeys: ['per_page']
+    }
+  ]
+}
 
-  it('Content-Encoding:	gzip', () => {})
+const proxy = new GhProxy(proxyConfig)
 
-  it('Rerponse body contains expected content', () => {})
+describe('GitHub requests proxy', () => {
+  it('Returns result with expected headers and content', () => {
+    return request(proxy.app)
+      .get('/users/microsoft/repos?per_page=42')
+      .expect('Content-Type', /json/)
+      .expect('Link', /rel="next"/)
+      .expect(200)
+      .expect('Content-Encoding', /gzip/)
+      .then(response => {
+        assert.strictEqual(response.body.length, 42, 'Wrong body')
+      })
+  })
 })

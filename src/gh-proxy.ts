@@ -25,7 +25,8 @@ export interface GhProxyConfig {
 }
 
 export class GhProxy {
-  private readonly app: Application
+  private readonly _app: Application
+
   private readonly baseUrl = 'https://api.github.com'
   private readonly access_token: string
   private readonly port: number
@@ -34,19 +35,19 @@ export class GhProxy {
     const { GITHUB_TOKEN, PORT = '3000' } = process.env
     const port = parseInt(PORT)
 
-    if (!GITHUB_TOKEN || port) {
+    if (!GITHUB_TOKEN || !port) {
       throw Error(`No GITHUB_TOKEN or wrong PORT value: ${PORT}`)
     }
 
     this.port = port
     this.access_token = GITHUB_TOKEN
-    this.app = express()
+    this._app = express()
 
-    this.app.use(morgan('short'))
-    this.app.use(compression())
+    this._app.use(morgan('short'))
+    this._app.use(compression())
 
     for (const item of config.endpoints) {
-      this.app.get(item.path, (req, res, next) => {
+      this._app.get(item.path, (req, res, next) => {
         const {
           path,
           query,
@@ -65,8 +66,8 @@ export class GhProxy {
       })
     }
 
-    this.app.all('/', this.notFoundHandler)
-    this.app.use(this.errorHandler)
+    this._app.all('/', this.notFoundHandler)
+    this._app.use(this.errorHandler)
   }
 
   private static pipeResponse(from: FetchResponse, to: ExpressResponse, host: string) {
@@ -80,12 +81,10 @@ export class GhProxy {
       const linkHeader = new LinkHeader(link)
 
       for (const ref of linkHeader.refs) {
-        console.log(ref)
         const url = new URL(ref.uri)
         url.host = host
         url.searchParams.delete('access_token')
         ref.uri = url.toString()
-        console.log(ref)
       }
 
       to.links(linkHeader.refs.reduce((obj, ref) => ({ ...obj, [ref.rel]: ref.uri }), {}))
@@ -108,8 +107,12 @@ export class GhProxy {
   }
 
   run() {
-    this.app.listen(this.port, () => {
+    this._app.listen(this.port, () => {
       console.log(`Listening on port ${this.port}!`)
     })
+  }
+
+  get app() {
+    return this._app
   }
 }
