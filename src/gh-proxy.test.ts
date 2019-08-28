@@ -1,4 +1,6 @@
 import assert from 'assert'
+import { URL } from 'url'
+
 import request from 'supertest'
 import { config as envConfig } from 'dotenv'
 
@@ -19,10 +21,14 @@ const proxy = new GhProxy(proxyConfig)
 
 describe('GitHub requests proxy', () => {
   it('Returns result with expected headers and content', () => {
-    return request(proxy.app)
-      .get('/users/microsoft/repos?per_page=42')
+    const req = request(proxy.app).get('/users/microsoft/repos?per_page=42')
+
+    const url = new URL(req.url)
+    const linkRegexp = `<.*${url.host}.*>;\\s+rel="next"`
+
+    return req
       .expect('Content-Type', /json/)
-      .expect('Link', /rel="next"/)
+      .expect('Link', new RegExp(linkRegexp))
       .expect(200)
       .expect('Content-Encoding', /gzip/)
       .then(response => {
@@ -34,5 +40,11 @@ describe('GitHub requests proxy', () => {
     return request(proxy.app)
       .get('/wrong/')
       .expect(404)
+  })
+
+  it('Aborts?', () => {
+    const req = request(proxy.app)
+    const prom = req.get('/users/microsoft/repos')
+    setTimeout(() => prom.abort(), 2)
   })
 })
