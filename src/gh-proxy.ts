@@ -79,6 +79,8 @@ export class GhProxy {
       to.type(contentType)
     }
 
+    console.log(from)
+
     if (link) {
       const linkHeader = new LinkHeader(link)
 
