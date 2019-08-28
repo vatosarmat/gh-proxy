@@ -29,4 +29,10 @@ describe('GitHub requests proxy', () => {
         assert.strictEqual(response.body.length, 42, 'Wrong body')
       })
   })
+
+  it('Wrong endpoints correctly handled', () => {
+    return request(proxy.app)
+      .get('/wrong/')
+      .expect(404)
+  })
 })
