@@ -21,8 +21,9 @@
     "typescript": "^3.5.3"
   },
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpileOnly ./src/app.ts",
-    "prod": "tsc && node ./build/app.js",
+    "dev": "ts-node-dev --respawn --transpileOnly ./src/index.ts",
+    "build": "tsc",
+    "start": "node ./build/index.js",
     "test": "mocha"
   },
   "devDependencies": {
