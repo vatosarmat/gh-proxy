@@ -12,7 +12,10 @@ const proxyConfig: GhProxyConfig = {
   endpoints: [
     {
       path: '/users/:username/repos',
-      queryKeys: ['per_page']
+      queryKeys: {
+        required: 'per_page',
+        optional: 'page'
+      }
     }
   ]
 }
@@ -21,7 +24,7 @@ const proxy = new GhProxy(proxyConfig)
 
 describe('GitHub requests proxy', () => {
   it('Returns result with expected headers and content', () => {
-    const req = request(proxy.app).get('/users/microsoft/repos?per_page=42')
+    const req = request(proxy.app).get('/users/microsoft/repos?per_page=42&page=3')
 
     const url = new URL(req.url)
     const linkRegexp = `<.*${url.host}.*>;\\s+rel="next"`
@@ -29,8 +32,10 @@ describe('GitHub requests proxy', () => {
     return req
       .expect('Content-Type', /json/)
       .expect('Link', new RegExp(linkRegexp))
-      .expect(200)
       .expect('Content-Encoding', /gzip/)
+      .expect('Access-Control-Allow-Origin', /.*/)
+      .expect('Access-Control-Expose-Headers', /Link/)
+      .expect(200)
       .then(response => {
         assert.strictEqual(response.body.length, 42, 'Wrong body')
       })

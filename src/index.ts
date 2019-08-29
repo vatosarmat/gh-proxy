@@ -7,16 +7,19 @@ envConfig()
 const proxyConfig: GhProxyConfig = {
   endpoints: [
     {
-      path: '/users/:username',
-      queryKeys: []
+      path: '/users/:username'
     },
     {
       path: '/search/users',
-      queryKeys: ['q', 'per_page']
+      queryKeys: { required: ['q', 'per_page'] }
     },
     {
       path: '/users/:username/repos',
-      queryKeys: ['per_page']
+      queryKeys: { required: 'per_page', optional: 'page' }
+    },
+    {
+      path: '/user/:id/repos',
+      queryKeys: { required: 'per_page', optional: 'page' }
     }
   ]
 }

@@ -21,7 +21,10 @@ const pipeline = util.promisify(stream.pipeline)
 export interface GhProxyConfig {
   readonly endpoints: {
     readonly path: string
-    readonly queryKeys: string[]
+    readonly queryKeys?: {
+      readonly required?: string | string[]
+      readonly optional?: string | string[]
+    }
   }[]
 }
 
@@ -46,20 +49,34 @@ export class GhProxy {
 
     this._app.use(morgan('short'))
     this._app.use(compression())
-    this._app.use(cors())
+    this._app.use(
+      cors({
+        exposedHeaders: ['Link']
+      })
+    )
 
     for (const item of config.endpoints) {
       this._app.get(item.path, (req, res, next) => {
         const {
           path,
           query,
+          url,
           headers: { host }
         } = req
 
-        const params = pick(query, item.queryKeys)
+        let requiredKeys: string[] = []
+        let optionalKeys: string[] = []
 
-        if (host && item.queryKeys.every(key => params[key])) {
-          fetch(this.makeUrl(path, params))
+        if (item.queryKeys) {
+          const { required, optional } = item.queryKeys
+          requiredKeys = required ? [required].flat() : []
+          optionalKeys = optional ? [optional].flat() : []
+        }
+
+        const queryParams = pick(query, [...requiredKeys, ...optionalKeys])
+
+        if (host && requiredKeys.every(key => queryParams[key])) {
+          fetch(this.makeUrl(path, queryParams))
             .then(resp => GhProxy.pipeResponse(resp, res, host))
             .catch(next)
         } else {
@@ -74,12 +91,10 @@ export class GhProxy {
 
   private static pipeResponse(from: FetchResponse, to: ExpressResponse, host: string) {
     const contentType = from.headers.get('Content-Type')
-    const link = from.headers.get('Link')
+    const link = from.headers.get('link')
     if (contentType) {
       to.type(contentType)
     }
-
-    console.log(from)
 
     if (link) {
       const linkHeader = new LinkHeader(link)
@@ -87,11 +102,13 @@ export class GhProxy {
       for (const ref of linkHeader.refs) {
         const url = new URL(ref.uri)
         url.host = host
+        url.protocol = 'http'
         url.searchParams.delete('access_token')
         ref.uri = url.toString()
       }
 
-      to.links(linkHeader.refs.reduce((obj, ref) => ({ ...obj, [ref.rel]: ref.uri }), {}))
+      const zz = linkHeader.refs.reduce((obj, ref) => ({ ...obj, [ref.rel]: ref.uri }), {})
+      to.links(zz)
     }
 
     return pipeline(from.body, to)
@@ -102,6 +119,7 @@ export class GhProxy {
   }
 
   errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+    console.log(err.toString())
     res.status(500).end()
   }
 
