@@ -77,7 +77,7 @@ export class GhProxy {
 
         if (host && requiredKeys.every(key => queryParams[key])) {
           fetch(this.makeUrl(path, queryParams))
-            .then(resp => GhProxy.pipeResponse(resp, res, host, this.getProtocol(req)))
+            .then(resp => GhProxy.pipeResponse(resp, res, host, req.protocol))
             .catch(next)
         } else {
           res.status(400).end()
@@ -141,13 +141,5 @@ export class GhProxy {
 
   get app() {
     return this._app
-  }
-
-  getProtocol(req: ExpressRequest) {
-    if (process.env.NODE_ENV === 'test') {
-      return 'http'
-    } else {
-      return new URL(req.url).protocol
-    }
   }
 }
