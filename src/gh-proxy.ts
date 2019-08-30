@@ -6,6 +6,7 @@ import stream from 'stream'
 import express, {
   Application,
   RequestHandler,
+  Request as ExpressRequest,
   Response as ExpressResponse,
   ErrorRequestHandler
 } from 'express'
@@ -36,11 +37,11 @@ export class GhProxy {
   private readonly port: number
 
   constructor(private readonly config: GhProxyConfig) {
-    const { GITHUB_TOKEN, PORT = '3000' } = process.env
+    const { NODE_ENV, GITHUB_TOKEN, PORT = '3000' } = process.env
     const port = parseInt(PORT)
 
-    if (!GITHUB_TOKEN || !port) {
-      throw Error(`No GITHUB_TOKEN or wrong PORT value: ${PORT}`)
+    if (!NODE_ENV || !GITHUB_TOKEN || !port) {
+      throw Error(`No GITHUB_TOKEN or NODE_ENV or wrong PORT value: ${PORT}`)
     }
 
     this.port = port
@@ -60,7 +61,6 @@ export class GhProxy {
         const {
           path,
           query,
-          url,
           headers: { host }
         } = req
 
@@ -77,7 +77,7 @@ export class GhProxy {
 
         if (host && requiredKeys.every(key => queryParams[key])) {
           fetch(this.makeUrl(path, queryParams))
-            .then(resp => GhProxy.pipeResponse(resp, res, host))
+            .then(resp => GhProxy.pipeResponse(resp, res, host, this.getProtocol(req)))
             .catch(next)
         } else {
           res.status(400).end()
@@ -89,7 +89,12 @@ export class GhProxy {
     this._app.use(this.errorHandler)
   }
 
-  private static pipeResponse(from: FetchResponse, to: ExpressResponse, host: string) {
+  private static pipeResponse(
+    from: FetchResponse,
+    to: ExpressResponse,
+    host: string,
+    protocol: string
+  ) {
     const contentType = from.headers.get('Content-Type')
     const link = from.headers.get('link')
     if (contentType) {
@@ -102,7 +107,7 @@ export class GhProxy {
       for (const ref of linkHeader.refs) {
         const url = new URL(ref.uri)
         url.host = host
-        url.protocol = 'http'
+        url.protocol = protocol
         url.searchParams.delete('access_token')
         ref.uri = url.toString()
       }
@@ -136,5 +141,13 @@ export class GhProxy {
 
   get app() {
     return this._app
+  }
+
+  getProtocol(req: ExpressRequest) {
+    if (process.env.NODE_ENV === 'test') {
+      return 'http'
+    } else {
+      return new URL(req.url).protocol
+    }
   }
 }
