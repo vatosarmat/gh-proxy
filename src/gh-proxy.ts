@@ -35,19 +35,23 @@ export class GhProxy {
   private readonly baseUrl = 'https://api.github.com'
   private readonly access_token: string
   private readonly port: number
+  private readonly protocol: 'http' | 'https'
 
   constructor(private readonly config: GhProxyConfig) {
-    const { NODE_ENV, GITHUB_TOKEN, PORT = '3000' } = process.env
+    const { GITHUB_TOKEN, PORT = '3000', HTTPS } = process.env
     const port = parseInt(PORT)
 
-    if (!NODE_ENV || !GITHUB_TOKEN || !port) {
-      throw Error(`No GITHUB_TOKEN or NODE_ENV or wrong PORT value: ${PORT}`)
+    if (!GITHUB_TOKEN || !port) {
+      throw Error(`No GITHUB_TOKEN or wrong PORT value: ${PORT}`)
     }
 
+    this.protocol = HTTPS ? 'https' : 'http'
     this.port = port
     this.access_token = GITHUB_TOKEN
-    this._app = express()
 
+    console.log('protocol: ' + this.protocol)
+
+    this._app = express()
     this._app.use(morgan('short'))
     this._app.use(compression())
     this._app.use(
@@ -77,7 +81,7 @@ export class GhProxy {
 
         if (host && requiredKeys.every(key => queryParams[key])) {
           fetch(this.makeUrl(path, queryParams))
-            .then(resp => GhProxy.pipeResponse(resp, res, host, req.protocol))
+            .then(resp => this.pipeResponse(resp, res, host))
             .catch(next)
         } else {
           res.status(400).end()
@@ -89,12 +93,7 @@ export class GhProxy {
     this._app.use(this.errorHandler)
   }
 
-  private static pipeResponse(
-    from: FetchResponse,
-    to: ExpressResponse,
-    host: string,
-    protocol: string
-  ) {
+  private pipeResponse(from: FetchResponse, to: ExpressResponse, host: string) {
     const contentType = from.headers.get('Content-Type')
     const link = from.headers.get('link')
     if (contentType) {
@@ -107,7 +106,7 @@ export class GhProxy {
       for (const ref of linkHeader.refs) {
         const url = new URL(ref.uri)
         url.host = host
-        url.protocol = protocol
+        url.protocol = this.protocol
         url.searchParams.delete('access_token')
         ref.uri = url.toString()
       }
