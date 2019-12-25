@@ -96,6 +96,7 @@ export class GhProxy {
   private pipeResponse(from: FetchResponse, to: ExpressResponse, host: string) {
     const contentType = from.headers.get('Content-Type')
     const link = from.headers.get('link')
+    to.status(from.status)
     if (contentType) {
       to.type(contentType)
     }
@@ -111,8 +112,7 @@ export class GhProxy {
         ref.uri = url.toString()
       }
 
-      const zz = linkHeader.refs.reduce((obj, ref) => ({ ...obj, [ref.rel]: ref.uri }), {})
-      to.links(zz)
+      to.setHeader('link', linkHeader.toString())
     }
 
     return pipeline(from.body, to)

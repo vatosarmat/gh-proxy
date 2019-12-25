@@ -1,55 +1,117 @@
 import assert from 'assert'
 import { URL } from 'url'
-
 import request from 'supertest'
-import { config as envConfig } from 'dotenv'
+import nock from 'nock'
 
-import { GhProxy, GhProxyConfig } from './gh-proxy'
+import { config as envConfig } from 'dotenv'
+import { GhProxy } from './gh-proxy'
+import proxyConfig from './config'
+import fixtures from './fixtures.json'
 
 envConfig()
 
-const proxyConfig: GhProxyConfig = {
-  endpoints: [
-    {
-      path: '/users/:username/repos',
-      queryKeys: {
-        required: 'per_page',
-        optional: 'page'
-      }
-    }
-  ]
+if (!process.env.GITHUB_TOKEN) {
+  console.error('Missing GITHUB_TOKEN env var')
+  process.exit(1)
 }
 
 const proxy = new GhProxy(proxyConfig)
+const origin = 'https://api.github.com'
 
 describe('GitHub requests proxy', () => {
-  it('Returns result with expected headers and content', () => {
-    const req = request(proxy.app).get('/users/microsoft/repos?per_page=42&page=3')
+  it('Works on user data request', () => {
+    const reqUrl = '/users/microsoft'
+    const { status, body, headers } = fixtures[reqUrl]
 
-    const url = new URL(req.url)
-    const linkRegexp = `<.*${url.host}.*>;\\s+rel="next"`
+    nock(origin)
+      .get(reqUrl)
+      .query({
+        access_token: /\w+/
+      })
+      .once()
+      .reply(status, body, headers)
+
+    const req = request(proxy.app).get(reqUrl)
 
     return req
-      .expect('Content-Type', /json/)
-      .expect('Link', new RegExp(linkRegexp))
-      .expect('Content-Encoding', /gzip/)
-      .expect('Access-Control-Allow-Origin', /.*/)
+      .expect('Content-Type', /application\/json/)
+      .expect('Access-Control-Allow-Origin', '*')
       .expect('Access-Control-Expose-Headers', /Link/)
       .expect(200)
-      .then(response => {
-        assert.strictEqual(response.body.length, 42, 'Wrong body')
+      .then(resp => {
+        assert.strictEqual(resp.body.login, 'microsoft')
       })
   })
 
-  it('Wrong endpoints correctly handled', () => {
-    return request(proxy.app)
-      .get('/wrong/')
-      .expect(404)
+  it('Works on user repos request', () => {
+    const reqUrl = '/user/6154722/repos?per_page=10&page=3'
+    const { status, body, headers } = fixtures[reqUrl]
+
+    const url = new URL(reqUrl, origin)
+
+    const q = {
+      ...Array.from(url.searchParams.entries()).reduce(
+        (obj, [key, value]) => ({ ...obj, [key]: value }),
+        {}
+      ),
+      access_token: /\w+/
+    }
+
+    nock(url.origin)
+      .get(url.pathname)
+      .query(q)
+      .once()
+      .reply(status, body, headers)
+
+    const req = request(proxy.app).get(reqUrl)
+    const testOrigin = new URL(req.url).origin
+
+    const expectedLinkHeaderValue =
+      `<${testOrigin}/user/6154722/repos?per_page=10&page=2>; rel=prev, ` +
+      `<${testOrigin}/user/6154722/repos?per_page=10&page=4>; rel=next, ` +
+      `<${testOrigin}/user/6154722/repos?per_page=10&page=292>; rel=last, ` +
+      `<${testOrigin}/user/6154722/repos?per_page=10&page=1>; rel=first`
+
+    return req
+      .expect('Content-Type', /application\/json/)
+      .expect('Access-Control-Allow-Origin', '*')
+      .expect('Access-Control-Expose-Headers', /Link/)
+      .expect('Link', expectedLinkHeaderValue)
+      .expect(200)
+      .then(resp => {
+        const body = resp.body
+        assert(Array.isArray(resp.body))
+        assert(body.length === 10)
+        assert(
+          body.every(
+            (repo: any) =>
+              repo.id && repo.name && repo.url && repo.owner && repo.owner.id == 6154722
+          )
+        )
+      })
   })
 
-  it('Aborts?', () => {
-    const req = request(proxy.app)
-    const prom = req.get('/users/microsoft/repos')
-    setTimeout(() => prom.abort(), 2)
+  it('Responds with 404 on wrong endpoint', () => {
+    const reqUrl = '/users/no-such-user-on-github-i-am-sure'
+    const { status, body, headers } = fixtures[reqUrl]
+
+    nock(origin)
+      .get(reqUrl)
+      .query({
+        access_token: /\w+/
+      })
+      .once()
+      .reply(status, body, headers)
+
+    const req = request(proxy.app).get(reqUrl)
+
+    return req
+      .expect('Content-Type', /application\/json/)
+      .expect('Access-Control-Allow-Origin', '*')
+      .expect('Access-Control-Expose-Headers', /Link/)
+      .expect(404)
+      .then(resp => {
+        assert.strictEqual(resp.body.message, 'Not Found')
+      })
   })
 })
