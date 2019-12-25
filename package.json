@@ -21,7 +21,7 @@
     "dev": "NODE_ENV=development ts-node-dev --respawn --transpileOnly ./src/index.ts",
     "build": "tsc",
     "start": "NODE_ENV=production node ./build/index.js",
-    "test": "NODE_ENV=test mocha",
+    "test": "NODE_ENV=test nyc mocha",
     "cf": "ts-node ./createFixtures.ts"
   },
   "devDependencies": {
@@ -39,6 +39,7 @@
     "@types/supertest": "^2.0.8",
     "mocha": "^6.2.0",
     "nock": "^11.7.0",
+    "nyc": "^15.0.0",
     "supertest": "^4.0.2",
     "ts-node-dev": "^1.0.0-pre.42",
     "typescript": "^3.5.3"
