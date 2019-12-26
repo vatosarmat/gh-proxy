@@ -7,5 +7,5 @@ install:
   - yarn install
 
 script:
-  - yarn test
   - yarn build
+  - yarn test:coverage_report
