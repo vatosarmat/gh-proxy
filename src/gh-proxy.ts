@@ -91,7 +91,7 @@ export class GhProxy {
       })
     }
 
-    this._app.all('/', this.notFoundHandler)
+    this._app.use(this.notFoundHandler)
     this._app.use(this.errorHandler)
   }
 

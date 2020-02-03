@@ -91,7 +91,7 @@ describe('GitHub requests proxy', () => {
       })
   })
 
-  it('Responds with 404 on wrong endpoint', () => {
+  it('Responds with 404 if no such resource', () => {
     const reqUrl = '/users/no-such-user-on-github-i-am-sure'
     const { status, body, headers } = fixtures[reqUrl]
 
@@ -113,5 +113,21 @@ describe('GitHub requests proxy', () => {
       .then(resp => {
         assert.strictEqual(resp.body.message, 'Not Found')
       })
+  })
+
+  it('Responds with 400 if missing query params', () => {
+    const reqUrl = '/search/users?per_page=10'
+
+    const req = request(proxy.app).get(reqUrl)
+
+    return req.expect(400)
+  })
+
+  it('Responds with 404 if wrong endpoint', () => {
+    const reqUrl = '/games'
+
+    const req = request(proxy.app).get(reqUrl)
+
+    return req.expect(404)
   })
 })
