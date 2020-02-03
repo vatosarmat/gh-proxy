@@ -36,9 +36,10 @@ export class GhProxy {
   private readonly access_token: string
   private readonly port: number
   private readonly protocol: 'http' | 'https'
+  private readonly proxy?: string
 
   constructor(private readonly config: GhProxyConfig) {
-    const { GITHUB_TOKEN, PORT = '3000', HTTPS } = process.env
+    const { GITHUB_TOKEN, PORT = '3000', HTTPS, PROXY } = process.env
     const port = parseInt(PORT)
 
     if (!GITHUB_TOKEN || !port) {
@@ -48,8 +49,9 @@ export class GhProxy {
     this.protocol = HTTPS ? 'https' : 'http'
     this.port = port
     this.access_token = GITHUB_TOKEN
+    this.proxy = PROXY
 
-    console.log('protocol: ' + this.protocol)
+    console.log(`protocol: ${this.protocol}, proxy: ${this.proxy ?? 'no'}`)
 
     this._app = express()
     this._app.use(morgan('short'))
@@ -65,7 +67,7 @@ export class GhProxy {
         const {
           path,
           query,
-          headers: { host }
+          headers: { host: reqHost }
         } = req
 
         let requiredKeys: string[] = []
@@ -79,9 +81,9 @@ export class GhProxy {
 
         const queryParams = pick(query, [...requiredKeys, ...optionalKeys])
 
-        if (host && requiredKeys.every(key => queryParams[key])) {
+        if (reqHost && requiredKeys.every(key => queryParams[key])) {
           fetch(this.makeUrl(path, queryParams))
-            .then(resp => this.pipeResponse(resp, res, host))
+            .then(resp => this.pipeResponse(resp, res, this.proxy ?? reqHost))
             .catch(next)
         } else {
           res.status(400).end()
@@ -93,7 +95,7 @@ export class GhProxy {
     this._app.use(this.errorHandler)
   }
 
-  private pipeResponse(from: FetchResponse, to: ExpressResponse, host: string) {
+  private pipeResponse(from: FetchResponse, to: ExpressResponse, linkHost: string) {
     const contentType = from.headers.get('Content-Type')
     const link = from.headers.get('link')
     to.status(from.status)
@@ -106,7 +108,7 @@ export class GhProxy {
 
       for (const ref of linkHeader.refs) {
         const url = new URL(ref.uri)
-        url.host = host
+        url.host = linkHost
         url.protocol = this.protocol
         url.searchParams.delete('access_token')
         ref.uri = url.toString()

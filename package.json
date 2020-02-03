@@ -19,6 +19,7 @@
   },
   "scripts": {
     "dev": "NODE_ENV=development ts-node-dev --respawn --transpileOnly ./src/index.ts",
+    "clean": "rm -rf ./build",
     "build": "tsc -p tsconfig.build.json",
     "start": "NODE_ENV=production node ./build/index.js",
     "test": "NODE_ENV=test mocha",
