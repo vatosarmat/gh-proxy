@@ -6,8 +6,6 @@ node_js:
 install:
   - yarn install
 script:
-  - echo $DOCKER_USERNAME | md5sum -t
-  - echo $DOCKER_PASSWORD | md5sum -t
   - yarn test:coverage_report
   - yarn build
   - docker build -t $TRAVIS_REPO_SLUG .
@@ -15,4 +13,4 @@ script:
   - docker push $TRAVIS_REPO_SLUG
 env:
   global:
-    secure: r5rfa3dWC5BicBntp8LzI3hJyGDB0S/3ZlxNhjIwefePKnjU4epofmTd+74S2K8gBeKGBA1xHgo3L/MqyWG6iFMgWpkS2S2KDgn//OwhCNPozvDqdnStBgaBF2QgGg2N3/+XQy7gftcUr+sJ8VJGiF0HyzrgaAXelaqpRnAU+n0Uscjr8rfMBGpV51QdRV+4dudMO+8eK/xPONGPuD4mYjsusapbjdMIe1Y+8WAh2s1Zuhk8n5nJsP6/jfaAxCIvIeFvLZJzwP+XNwm41sxTjOQrCoVjNYLMHf9QlO3KLZCNIvqbBSTdhAFKjIi7dCxwkbsM8vtUjnlERB9luHX48A0KDJtigsPXE078e9m0ai7/7H5NCCowwQ9vpcCpaPM4f9bhYoaouB6mSfYnvLQUW6rNToMOjTJ4ljP0rDQt+SkTM/kZCM0wUJF/rZlVsBr3rTsTl+bmODUW42zt7BIcF/av/73q2y/r0tKJgfEUXYlo1gHjT3eFnmmsNb92QRULCDg3evPgsrdILgvcZjGjeDvsLnlXMrh51QfB9nhFiHmvVLINHymcEyIFVjVS7U/wSsMH1ldGptR18onyBYoql+Wp5mmDFSjrZjWCBKXGGOk6EYORnWwbJ+qnRUlaMLMg97FcGm8i0Ryw0uTh2suHetP8NOU7BcrMQk0JTUrolWs=
+    secure: rq7CLXQ63gClgwMMthyY3edfKgfcX77VEcvNNuNiQKiscO9GVMQqKphIfcKG1FOYzxjfsR/TXrzeyRoAfi4/UD863qP57OrcDwego05iEEkjkqRZW+Zkd/osnSP06Vnta1ZYXGqiOU6bC13LL3nd6dSSCgAiCmFCsLRaC7sRCKPg17GPqvtwY3t/aq7T2imNzwPNnaqZcVDUMPLlMnjxpae8JVG6quDeO+E0Z7S/EmVwnuG8azA4ivbTwCKKvy5bgcCqv2JVLJjfAYBEUx1yRbdH/Xj/ARzvqCE2QfOYWZl9LhypaE6uWWB9tXQe3dTZhPZYQvTf+cCk9jZHevNVxzboabMGnyhS6Xu5zuwxSXOoMnE0acWx3ugBLRvnPmgNNqbfJ+f9UWlo6ha3kiP1fgcDA3On5z6TVC0D5w2Fr4KfPbP9BTZVnSTz9o0s8Ks5JGYU2djwA1S81AkFn6rnwNHOVaT5Wbf7qF9qRVu6k6/cnpq/rNpRiCfl641C2QechdGxHYfEB2ZOnDJGWsT5kIGDfSYC/DMnx/snXjZ2bpgH573vfmC0z/3D+OJGxyvQ785xPQhEoemcFg2ZPkKDZTb8FWS9zCHjgsM8SC+tGKXU6ZhwKEYiHuWG3tuwuEnAjt5gQc4Q8Wy/QtW6u0sbMin0GKIH0YNn0X5pIyT6nmk=
