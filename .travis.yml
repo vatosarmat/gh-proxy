@@ -1,18 +1,16 @@
 language: node_js
 services:
-  - docker
+- docker
 node_js:
-  - '12'
+- '12'
 install:
-  - yarn install
+- yarn install
 script:
-  - echo $DOCKER_USERNAME | md5sum -t
-  - echo $DOCKER_PASSWORD | md5sum -t
-  - yarn test:coverage_report
-  - yarn build
-  - docker build -t $TRAVIS_REPO_SLUG .
-  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - docker push $TRAVIS_REPO_SLUG
+- yarn test:coverage_report
+- yarn build
+- docker build -t $TRAVIS_REPO_SLUG .
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+- docker push $TRAVIS_REPO_SLUG
 env:
   global:
-    - secure: G39S4PkWF3s3io4CGqDEk6fyCKdyLmDNaisHL/kT4HkVpqaPW5b5Q/EHzccinFOeNjic3uEfBWJQOPrKEK5zDecOB6FfoSIBPOyUkQ35lM0fU0nMkIC6a9qw+M5NQBrjb90Yb/eg06lMiUfTBVrD6/FDfHjyZiavSRT62p0mSykR8cTyrPt7o+eA9+bHJe3fRv7czpnj8EOBHtDu2CzWAIkagnkk3SH7zEJz3RrCdq/Sy/Wo63+jrPxmqd5YkhVa6RP3Lp9G8VWs+0Wc3TS+7Rc2IDqC1fsgyrq84Uw8X6JX+5nrhNdqEsHsiyPOGHTKBX4hHclKFHJZ4Meh5oZY9KfeSiia9Ka0hlo2STuasGc1htlmA47xaJjX7hIG0mbk7K5f5IAZGPqmzFrvdvMlyTYOTRxsss/k7g+okf2XzTfKFo3pbAD0j7vL27BkzN1hmCm5YfpXtGRi60Pa6ijNu2n/eisRtk79KIEQk3rhFrsZapG7C4a7SAV5IsIzmRmS13N4HNEkY7zMPnSInWbKvl+0HB3M7VIuqriQ4KNATKbH4cjR0DX0EaewJBpAZZtDQCOeHAb1L+sjf+TOtq2+D/5URYQ/S5IJ4o1OsoVT9bc2OOL/AjW4sQOdqGNjlkSfOrU/EmYFCeb44hqfSxbv8RzihQKPyxy0FEdtWExSGEw=
+    secure: I/5ts5JCM22Z63wP9rFtAA5dMaP4tbmztMjvf5iYpZBZzQK1kvkRBoQvv2KxN0XlSrEScos96PnK5NvDnurPxqdcEEUNUEcPrN7MufwVtpS7Gtf8vrE4hb3eESVeY7FfKeWHU/9xz60cu9bcpxwrDwRdH2Gs2jd7w0ietRhdjubze8b8O8JJyuYFSU4oPBx3xpO0YqC2Uy6w/Wj73C4yqbCK5dn4ADPkOFvh46k3nzjXH+e8aj991YpPIszT1I9Hd0uoXBEcbfgC7qT1+SK6wim07u4Er0T0rl6mMZfpaVZPS1nuzEkjDUprgQPPpw0njnVoczRIOUkkzY3whAfKHKaITXQ2zN8hs/PdQyQtjJZZBxmNj5M+xE1pTtS4hknSCQtUR2e4B6kv+BTCyuTFJnC/7NHAiKCoAkjMX5EPXr567kazxxq81tQt62Ex4CKugwQNwakJRHOOuBBVdIe9dRAGkCKl4outSCKd+++vrH0Yjp23BAkouDYnexGPkI4h1Hyr+lojqf4xMR9ti1YiXy20pDwfhmcXyGCchp6i6EscpHtupAeMhHNB8lxmjqrdZZVMQCwTLAISLRAx9OG9OHxIQK+6h6Eh5kWJjuuwDNtHiTRK1jpv/1W+Madbr1vrh4bo4ERIBME7wZwZ+O11Tfcsdix/YH5EoMJtIMk9Isw=
