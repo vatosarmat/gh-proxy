@@ -1,11 +1,16 @@
 language: node_js
-
+services:
+- docker
 node_js:
-  - '12'
-
+- '12'
 install:
-  - yarn install
-
+- yarn install
 script:
-  - yarn build
-  - yarn test:coverage_report
+- yarn test:coverage_report
+- yarn build
+- docker build -t $TRAVIS_REPO_SLUG .
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+- docker push $TRAVIS_REPO_SLUG
+env:
+  global:
+    secure: YQqDJlHOM/ckI6nJksGMvAu4Gp4kNm3JjJveUuGdIe2mqarPUwiTfDTkM3JcSyy0LGRU+9zcpwkwqz/kyMjFDHTSJVRrCMrNTrtzfmolBYNgt+On0m2rZeGKdtYg1TiPNs+BmecrGCgwWL5IpYuQm/tv08ymkKzLlIy7WIK9HRD7yf3heaT7GRl1nUkRm4ScoJiVTH/tA0W1MpQu3qY5mlF7nsJ8gqz9unpvHXbBnDCL5Tvctb2zkHHHEzIDUKLA/pbu5I7wp3wqK22wBheaQW54Ju76uy7V9leiGtdhoQJGKz0oaIsnFxwfbQsWa9Nv6PYpcM7XMnTa/VBqHgrD+/WfgT1JmGZpKcxQi/Dd7pG5Rf8h+36nSrA2+3YLgSmO6Y9gV15Wi+E25gU9ivLIc6nWmePrUcAguLHPxYLwWE78IbT2MHIemqbMuQclsQyAyWvtOvrZR0NEsrWlOiEa4KD35sf7fgvgr00m5AsoXyY0kzDLWb0Q9BCOXawcQ4vGjKjDsdpXknrxl1yRiHnUIBo2jyG/TIdStqJlz724P3Prx14jzpEvAKTinerd2nSxCMzKXWxM0jV+VDtCiEQOUFxmpZeFFFYtsCIs6/u3QJ5MpddrZrDqtPelMBxpaLbHu/neI2+m41NWRcdfa78K+Sd/iKJsJ7PmMAJ7nlcY1Dc=
